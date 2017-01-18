@@ -20,8 +20,9 @@ namespace course {
 		vector<map<string, string>> data;
 		void next();
 		void end();
+		void(*callback)(vector<map<string, string>>*);
 	public:
-		Loader(vector<vector<string>>, HWND);
+		Loader(vector<vector<string>>, HWND, void(*f)(vector<map<string, string>>*));
 		~Loader();
 		void start();
 		void save(map<string, string>);

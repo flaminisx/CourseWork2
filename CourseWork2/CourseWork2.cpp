@@ -7,6 +7,7 @@
 #include "Loader.h"
 #include <vector>
 #include <string>
+#include <fstream>
 
 #define MAX_LOADSTRING 100
 
@@ -20,6 +21,14 @@ ATOM                MyRegisterClass(HINSTANCE hInstance);
 BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+
+ConfigLoader *config;
+
+void onDialogsCompleted(vector<map<string, string>>*);
+
+std::vector<std::vector<string>> conf;
+
+HWND editText;
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -35,6 +44,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
     LoadStringW(hInstance, IDC_COURSEWORK2, szWindowClass, MAX_LOADSTRING);
     MyRegisterClass(hInstance);
+	config = new ConfigLoader("config.json");
+	std::ofstream file("result.json", std::ios_base::trunc);
+	file.close();
 
     // Perform application initialization:
     if (!InitInstance (hInstance, nCmdShow))
@@ -102,7 +114,9 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // Store instance handle in our global variable
 
    HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+      CW_USEDEFAULT, 0, 530, 390, nullptr, nullptr, hInstance, nullptr);
+   editText = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("edit"), "", WS_CHILD | WS_VISIBLE | WS_VSCROLL | ES_MULTILINE | ES_READONLY, 10, 10, 500, 300, hWnd, (HMENU)33234, hInstance, NULL);
+
 
    if (!hWnd)
    {
@@ -112,14 +126,6 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
-
-   ConfigLoader *config = new ConfigLoader("config.json");
-   std::vector<std::vector<string>> conf = config->getConfig();
-   if (conf.size() > 0)
-   {
-	   course::Loader *loader = new course::Loader(conf, hWnd);
-	   loader->start();
-   }
 
    return TRUE;
 }
@@ -147,9 +153,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
+			case IDM_START:
+				conf = config->getConfig();
+				if (conf.size() > 0)
+				{
+					course::Loader *loader = new course::Loader(conf, hWnd, onDialogsCompleted);
+					loader->start();
+				}
+				break;
+			case IDM_CONFIG:
+				system("start /b  notepad config.json");
+				break;
+			case IDM_RESULT:
+				system("start /b  notepad result.json");
+				break;
+			case IDM_EXIT:
+				DestroyWindow(hWnd);
+				break;
             default:
                 return DefWindowProc(hWnd, message, wParam, lParam);
             }
@@ -190,4 +210,25 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+void onDialogsCompleted(vector<map<string, string>>* data) 
+{
+	vector<Json> arr = vector<Json>();
+	string formatedData = "";
+	for (int i = 0; i < data->size(); i++)
+	{
+		map<string, Json > panelData = map<string, Json >();
+		for (pair<string, string> p : (*data)[i])
+		{
+			panelData.insert({ p.first, Json(p.second) });
+			formatedData += p.first + ": " + p.second + "\r\n";
+		}
+		arr.push_back(Json(panelData));
+	}
+	string s = Json(arr).dump();
+	std::ofstream file("result.json");
+	file << s;
+	file.close();
+	SetWindowText(editText, formatedData.c_str());
 }

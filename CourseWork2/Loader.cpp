@@ -5,12 +5,13 @@
 using namespace std;
 using namespace course;
 
-Loader::Loader(vector<vector<string>> conf, HWND hWND)
+Loader::Loader(vector<vector<string>> conf, HWND hWND, void(*f)(vector<map<string, string>>*))
 {
 	config = conf;
 	hWnd = hWND;
 	step = 0;
 	data = vector<map<string, string>>();
+	callback = f;
 }
 
 
@@ -27,11 +28,18 @@ void Loader::start()
 void Loader::save(map<string, string> result)
 {
 	data.push_back(result);
-	if (++step < config.size()) next();
+	if (++step < config.size())
+	{
+		next();
+	}
 	else end();
 }
-void course::Loader::previous()
+void Loader::previous()
 {
+	step--;
+	data.erase(data.begin() + data.size() - 1);
+	currentDialog = new Dialog(this, config[step], hWnd, step == 0, step == (config.size() - 1));
+	currentDialog->show();
 }
 void Loader::next()
 {
@@ -41,18 +49,5 @@ void Loader::next()
 
 void Loader::end()
 {
-	vector<Json> arr = vector<Json>();
-	for (int i = 0; i < data.size(); i++)
-	{
-		map<string, Json > panelData = map<string, Json >();
-		for (pair<string, string> p : data[i])
-		{
-			panelData.insert({ p.first, Json(p.second) });
-		}
-		arr.push_back(Json(panelData));
-	}
-	string s = Json(arr).dump();
-	std::string stemp = std::string(s.begin(), s.end());
-	LPCSTR sw = stemp.c_str();
-	MessageBox(nullptr, sw, "test", MB_OK);
+	callback(&data);
 }

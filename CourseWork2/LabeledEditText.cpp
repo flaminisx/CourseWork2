@@ -12,8 +12,7 @@ LabeledEditText::~LabeledEditText()
 }
 void LabeledEditText::show() 
 {
-	std::string stemp = std::string(name.begin(), name.end());
-	LPCSTR sw = stemp.c_str();
+	LPCSTR sw = name.c_str();
 	CreateWindow("STATIC", sw, 
 				WS_CHILD | WS_VISIBLE | SS_LEFT, 
 				10, 20 + (number * 60), 350, 30, parent,

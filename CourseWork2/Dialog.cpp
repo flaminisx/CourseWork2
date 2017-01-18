@@ -58,7 +58,7 @@ void Dialog::createWindow()
 	{
 		DestroyWindow(hPanel);
 		UnregisterClass(className, hInstance);
-		MessageBox(nullptr, "destroy window", "test", MB_OK);
+		//MessageBox(nullptr, "window creating error", "error", MB_OK);
 
 	}
 	WNDCLASSEX wc = { 0 };
@@ -70,11 +70,10 @@ void Dialog::createWindow()
 	wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
 	wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 
-	// регистрация класса дочернего окна
 	ATOM WNDClass = RegisterClassEx(&wc);
 	if (!WNDClass)
 	{
-		MessageBox(nullptr, "not wndclass", "test", MB_OK);
+		MessageBox(nullptr, "wndclass wasnt registered", "error", MB_OK);
 
 		return;
 	}
@@ -157,11 +156,14 @@ LRESULT CALLBACK Dialog::actionHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 				m.insert(panels.at(i)->collectData());
 			}
 			DestroyWindow(hwnd);
+			UnregisterClass(className, GetModuleHandle(NULL));
 			loader->save(m);
 			break;
 		case IDB_PREVIOUS:
 			DestroyWindow(hwnd);
+			UnregisterClass(className, GetModuleHandle(NULL));
 			loader->previous();
+			break;
 		case IDB_SAVE:
 			m = map<string, string>();
 			for (int i = 0; i < config.size(); i++)
