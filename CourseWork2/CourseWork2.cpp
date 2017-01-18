@@ -3,6 +3,10 @@
 
 #include "stdafx.h"
 #include "CourseWork2.h"
+#include "ConfigLoader.h"
+#include "Loader.h"
+#include <vector>
+#include <string>
 
 #define MAX_LOADSTRING 100
 
@@ -105,8 +109,17 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
+
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
+
+   ConfigLoader *config = new ConfigLoader("config.json");
+   std::vector<std::vector<string>> conf = config->getConfig();
+   if (conf.size() > 0)
+   {
+	   course::Loader *loader = new course::Loader(conf, hWnd);
+	   loader->start();
+   }
 
    return TRUE;
 }
